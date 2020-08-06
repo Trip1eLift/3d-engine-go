@@ -33,8 +33,8 @@ type pixel struct {
 }
 
 type consoleComponent interface {
-	onCreate()
-	onUpdate()
+	onCreate() bool
+	onUpdate() bool
 }
 
 type consoleGraphicEngine struct {
@@ -57,6 +57,13 @@ func constructConsoleGraphicEngine(width int, height int, color string) *console
 	}
 	CGE.pixels = pixels
 	return CGE
+}
+
+func (CGE *consoleGraphicEngine) fillALL(pixel_type string, color string) {
+	for index := 0; index < len(CGE.pixels); index++ {
+		CGE.pixels[index].pixel_type = pixel_type
+		CGE.pixels[index].color = color
+	}
 }
 
 func (CGE *consoleGraphicEngine) drawPixel(x int, y int, pix_type string, pix_color string) {
