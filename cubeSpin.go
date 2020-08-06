@@ -106,6 +106,55 @@ func (c *cube) onCreate() bool {
 	return true
 }
 
+func (c *cube) projectAndDrawTriangle(tri triangle, matRotZ mat4x4, matRotX mat4x4, matScaleX mat4x4) {
+	var triProjected, triTranslated, triRotatedZ, triRotatedZX triangle
+
+	// Rotate in Z-Axis
+	triRotatedZ.p[0] = MultiplyMatrixVector(tri.p[0], matRotZ)
+	triRotatedZ.p[1] = MultiplyMatrixVector(tri.p[1], matRotZ)
+	triRotatedZ.p[2] = MultiplyMatrixVector(tri.p[2], matRotZ)
+
+	// Rotate in X-Axis
+	triRotatedZX.p[0] = MultiplyMatrixVector(triRotatedZ.p[0], matRotX)
+	triRotatedZX.p[1] = MultiplyMatrixVector(triRotatedZ.p[1], matRotX)
+	triRotatedZX.p[2] = MultiplyMatrixVector(triRotatedZ.p[2], matRotX)
+
+	triTranslated = triRotatedZX
+	triTranslated.p[0].z = triRotatedZX.p[0].z + 2
+	triTranslated.p[1].z = triRotatedZX.p[1].z + 2
+	triTranslated.p[2].z = triRotatedZX.p[2].z + 2
+
+	triProjected.p[0] = MultiplyMatrixVector(triTranslated.p[0], c.matProj)
+	triProjected.p[1] = MultiplyMatrixVector(triTranslated.p[1], c.matProj)
+	triProjected.p[2] = MultiplyMatrixVector(triTranslated.p[2], c.matProj)
+
+	// Scale X
+	triProjected.p[0] = MultiplyMatrixVector(triProjected.p[0], matScaleX)
+	triProjected.p[1] = MultiplyMatrixVector(triProjected.p[1], matScaleX)
+	triProjected.p[2] = MultiplyMatrixVector(triProjected.p[2], matScaleX)
+
+	// Scale into view
+	triProjected.p[0].x += 1.0
+	triProjected.p[0].y += 1.0
+	triProjected.p[1].x += 1.0
+	triProjected.p[1].y += 1.0
+	triProjected.p[2].x += 1.0
+	triProjected.p[2].y += 1.0
+
+	triProjected.p[0].x *= 0.5 * float32(c.graphics.screenWidth)
+	triProjected.p[0].y *= 0.5 * float32(c.graphics.screenHeight)
+	triProjected.p[1].x *= 0.5 * float32(c.graphics.screenWidth)
+	triProjected.p[1].y *= 0.5 * float32(c.graphics.screenHeight)
+	triProjected.p[2].x *= 0.5 * float32(c.graphics.screenWidth)
+	triProjected.p[2].y *= 0.5 * float32(c.graphics.screenHeight)
+
+	c.graphics.drawTriangle(
+		int(triProjected.p[0].x), int(triProjected.p[0].y),
+		int(triProjected.p[1].x), int(triProjected.p[1].y),
+		int(triProjected.p[2].x), int(triProjected.p[2].y),
+		FULL_BLOCK, WHITE)
+}
+
 func (c *cube) onUpdate() bool {
 	c.graphics.fillALL(SPACE_BLOCK, WHITE)
 	var matRotZ, matRotX, matScaleX mat4x4
@@ -135,52 +184,7 @@ func (c *cube) onUpdate() bool {
 
 	// Draw Triangles
 	for _, tri := range c.meshCube.tris {
-		var triProjected, triTranslated, triRotatedZ, triRotatedZX triangle
-
-		// Rotate in Z-Axis
-		triRotatedZ.p[0] = MultiplyMatrixVector(tri.p[0], matRotZ)
-		triRotatedZ.p[1] = MultiplyMatrixVector(tri.p[1], matRotZ)
-		triRotatedZ.p[2] = MultiplyMatrixVector(tri.p[2], matRotZ)
-
-		// Rotate in X-Axis
-		triRotatedZX.p[0] = MultiplyMatrixVector(triRotatedZ.p[0], matRotX)
-		triRotatedZX.p[1] = MultiplyMatrixVector(triRotatedZ.p[1], matRotX)
-		triRotatedZX.p[2] = MultiplyMatrixVector(triRotatedZ.p[2], matRotX)
-
-		triTranslated = triRotatedZX
-		triTranslated.p[0].z = triRotatedZX.p[0].z + 2
-		triTranslated.p[1].z = triRotatedZX.p[1].z + 2
-		triTranslated.p[2].z = triRotatedZX.p[2].z + 2
-
-		triProjected.p[0] = MultiplyMatrixVector(triTranslated.p[0], c.matProj)
-		triProjected.p[1] = MultiplyMatrixVector(triTranslated.p[1], c.matProj)
-		triProjected.p[2] = MultiplyMatrixVector(triTranslated.p[2], c.matProj)
-
-		// Scale X
-		triProjected.p[0] = MultiplyMatrixVector(triProjected.p[0], matScaleX)
-		triProjected.p[1] = MultiplyMatrixVector(triProjected.p[1], matScaleX)
-		triProjected.p[2] = MultiplyMatrixVector(triProjected.p[2], matScaleX)
-
-		// Scale into view
-		triProjected.p[0].x += 1.0
-		triProjected.p[0].y += 1.0
-		triProjected.p[1].x += 1.0
-		triProjected.p[1].y += 1.0
-		triProjected.p[2].x += 1.0
-		triProjected.p[2].y += 1.0
-
-		triProjected.p[0].x *= 0.5 * float32(c.graphics.screenWidth)
-		triProjected.p[0].y *= 0.5 * float32(c.graphics.screenHeight)
-		triProjected.p[1].x *= 0.5 * float32(c.graphics.screenWidth)
-		triProjected.p[1].y *= 0.5 * float32(c.graphics.screenHeight)
-		triProjected.p[2].x *= 0.5 * float32(c.graphics.screenWidth)
-		triProjected.p[2].y *= 0.5 * float32(c.graphics.screenHeight)
-
-		c.graphics.drawTriangle(
-			int(triProjected.p[0].x), int(triProjected.p[0].y),
-			int(triProjected.p[1].x), int(triProjected.p[1].y),
-			int(triProjected.p[2].x), int(triProjected.p[2].y),
-			FULL_BLOCK, WHITE)
+		go c.projectAndDrawTriangle(tri, matRotZ, matRotX, matScaleX)
 	}
 
 	return true

@@ -92,7 +92,7 @@ func (CGE *consoleGraphicEngine) drawLine(x1 int, y1 int, x2 int, y2 int, pix_ty
 			y = y2
 			xe = x1
 		}
-		CGE.drawPixel(x, y, pix_type, pix_color)
+		go CGE.drawPixel(x, y, pix_type, pix_color)
 
 		for i := 0; x < xe; i++ {
 			x++
@@ -106,7 +106,7 @@ func (CGE *consoleGraphicEngine) drawLine(x1 int, y1 int, x2 int, y2 int, pix_ty
 				}
 				px += 2 * (dy1 - dx1)
 			}
-			CGE.drawPixel(x, y, pix_type, pix_color)
+			go CGE.drawPixel(x, y, pix_type, pix_color)
 		}
 	} else {
 		if dy >= 0 {
@@ -118,7 +118,7 @@ func (CGE *consoleGraphicEngine) drawLine(x1 int, y1 int, x2 int, y2 int, pix_ty
 			y = y2
 			ye = y1
 		}
-		CGE.drawPixel(x, y, pix_type, pix_color)
+		go CGE.drawPixel(x, y, pix_type, pix_color)
 		for i := 0; y < ye; i++ {
 			y++
 			if py <= 0 {
@@ -131,7 +131,7 @@ func (CGE *consoleGraphicEngine) drawLine(x1 int, y1 int, x2 int, y2 int, pix_ty
 				}
 				py += 2 * (dx1 - dy1)
 			}
-			CGE.drawPixel(x, y, pix_type, pix_color)
+			go CGE.drawPixel(x, y, pix_type, pix_color)
 		}
 	}
 }
@@ -144,9 +144,9 @@ func abs(num int) int {
 }
 
 func (CGE *consoleGraphicEngine) drawTriangle(x1 int, y1 int, x2 int, y2 int, x3 int, y3 int, pix_type string, pix_color string) {
-	CGE.drawLine(x1, y1, x2, y2, pix_type, pix_color)
-	CGE.drawLine(x2, y2, x3, y3, pix_type, pix_color)
-	CGE.drawLine(x3, y3, x1, y1, pix_type, pix_color)
+	go CGE.drawLine(x1, y1, x2, y2, pix_type, pix_color)
+	go CGE.drawLine(x2, y2, x3, y3, pix_type, pix_color)
+	go CGE.drawLine(x3, y3, x1, y1, pix_type, pix_color)
 }
 
 func (CGE *consoleGraphicEngine) computeGraphics() {
