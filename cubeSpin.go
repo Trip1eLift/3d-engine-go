@@ -42,6 +42,7 @@ type cube struct {
 	meshCube mesh
 	matProj  mat4x4
 	fTheta   float32
+	vCamera  vec3d
 }
 
 func newCube(container *consoleGraphicEngine) *cube {
@@ -119,40 +120,66 @@ func (c *cube) projectAndDrawTriangle(tri triangle, matRotZ mat4x4, matRotX mat4
 	triRotatedZX.p[1] = MultiplyMatrixVector(triRotatedZ.p[1], matRotX)
 	triRotatedZX.p[2] = MultiplyMatrixVector(triRotatedZ.p[2], matRotX)
 
+	// Offset into the screen
 	triTranslated = triRotatedZX
 	triTranslated.p[0].z = triRotatedZX.p[0].z + 2
 	triTranslated.p[1].z = triRotatedZX.p[1].z + 2
 	triTranslated.p[2].z = triRotatedZX.p[2].z + 2
 
-	triProjected.p[0] = MultiplyMatrixVector(triTranslated.p[0], c.matProj)
-	triProjected.p[1] = MultiplyMatrixVector(triTranslated.p[1], c.matProj)
-	triProjected.p[2] = MultiplyMatrixVector(triTranslated.p[2], c.matProj)
+	// Hide lines behind object
+	var normal, line1, line2 vec3d
+	line1.x = triTranslated.p[1].x - triTranslated.p[0].x
+	line1.y = triTranslated.p[1].y - triTranslated.p[0].y
+	line1.z = triTranslated.p[1].z - triTranslated.p[0].z
 
-	// Scale X
-	triProjected.p[0] = MultiplyMatrixVector(triProjected.p[0], matScaleX)
-	triProjected.p[1] = MultiplyMatrixVector(triProjected.p[1], matScaleX)
-	triProjected.p[2] = MultiplyMatrixVector(triProjected.p[2], matScaleX)
+	line2.x = triTranslated.p[2].x - triTranslated.p[0].x
+	line2.y = triTranslated.p[2].y - triTranslated.p[0].y
+	line2.z = triTranslated.p[2].z - triTranslated.p[0].z
 
-	// Scale into view
-	triProjected.p[0].x += 1.0
-	triProjected.p[0].y += 1.0
-	triProjected.p[1].x += 1.0
-	triProjected.p[1].y += 1.0
-	triProjected.p[2].x += 1.0
-	triProjected.p[2].y += 1.0
+	normal.x = line1.y*line2.z - line1.z*line2.y
+	normal.y = line1.z*line2.x - line1.x*line2.z
+	normal.z = line1.x*line2.y - line1.y*line2.x
 
-	triProjected.p[0].x *= 0.5 * float32(c.graphics.screenWidth)
-	triProjected.p[0].y *= 0.5 * float32(c.graphics.screenHeight)
-	triProjected.p[1].x *= 0.5 * float32(c.graphics.screenWidth)
-	triProjected.p[1].y *= 0.5 * float32(c.graphics.screenHeight)
-	triProjected.p[2].x *= 0.5 * float32(c.graphics.screenWidth)
-	triProjected.p[2].y *= 0.5 * float32(c.graphics.screenHeight)
+	var l float32 = float32(math.Sqrt(float64(normal.x*normal.x + normal.y*normal.y + normal.z*normal.z)))
+	normal.x /= l
+	normal.y /= l
+	normal.z /= l
 
-	c.graphics.drawTriangle(
-		int(triProjected.p[0].x), int(triProjected.p[0].y),
-		int(triProjected.p[1].x), int(triProjected.p[1].y),
-		int(triProjected.p[2].x), int(triProjected.p[2].y),
-		FULL_BLOCK, WHITE)
+	if (normal.x*(triTranslated.p[0].x-c.vCamera.x) +
+		normal.y*(triTranslated.p[0].y-c.vCamera.y) +
+		normal.z*(triTranslated.p[0].z-c.vCamera.z)) < 0 {
+		// Project triangles from 3D -> 2D
+		triProjected.p[0] = MultiplyMatrixVector(triTranslated.p[0], c.matProj)
+		triProjected.p[1] = MultiplyMatrixVector(triTranslated.p[1], c.matProj)
+		triProjected.p[2] = MultiplyMatrixVector(triTranslated.p[2], c.matProj)
+
+		// Scale X
+		triProjected.p[0] = MultiplyMatrixVector(triProjected.p[0], matScaleX)
+		triProjected.p[1] = MultiplyMatrixVector(triProjected.p[1], matScaleX)
+		triProjected.p[2] = MultiplyMatrixVector(triProjected.p[2], matScaleX)
+
+		// Scale into view
+		triProjected.p[0].x += 1.0
+		triProjected.p[0].y += 1.0
+		triProjected.p[1].x += 1.0
+		triProjected.p[1].y += 1.0
+		triProjected.p[2].x += 1.0
+		triProjected.p[2].y += 1.0
+
+		triProjected.p[0].x *= 0.5 * float32(c.graphics.screenWidth)
+		triProjected.p[0].y *= 0.5 * float32(c.graphics.screenHeight)
+		triProjected.p[1].x *= 0.5 * float32(c.graphics.screenWidth)
+		triProjected.p[1].y *= 0.5 * float32(c.graphics.screenHeight)
+		triProjected.p[2].x *= 0.5 * float32(c.graphics.screenWidth)
+		triProjected.p[2].y *= 0.5 * float32(c.graphics.screenHeight)
+
+		c.graphics.drawTriangle(
+			int(triProjected.p[0].x), int(triProjected.p[0].y),
+			int(triProjected.p[1].x), int(triProjected.p[1].y),
+			int(triProjected.p[2].x), int(triProjected.p[2].y),
+			FULL_BLOCK, WHITE)
+	}
+
 }
 
 func (c *cube) onUpdate() bool {
